@@ -21,7 +21,7 @@ Ok you wanna get technical.. *\*clears throat\**
 - Brain
 
 ## What is working
-- Sending (Spamming) a snap to the user you last sent a snap to. A 15s video is recorded and sent to the users in the `last snap` group. 
+- Sending (Spamming) a snap to the user you last sent a snap to. A 15s video is recorded and sent to the users in the `last snap` group for a given amount of cycles. _Default value of cycles is 2._
 - Adding new friends based on usernames in a list (Snapbeam searches and adds ALL users with a given name). By default it will add users with names: `Robin, Clark, Chris`. You can change that in the `NAMES` variables of `main_payloads.py`
 
 ## What is NOT working _yet_
