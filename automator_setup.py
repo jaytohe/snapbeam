@@ -3,7 +3,6 @@ import sys
 import os
 from ppadb.client import Client
 import time
-import threading
 from utilities.touch.ScreenReader import ScreenReader
 
 class Display:
@@ -11,46 +10,9 @@ class Display:
         self.width, self.height = [int(dimension) for dimension in phys_size_str.split()[-1].split("x")]
         self.middle = (self.width//2, self.height//2)
 
-class STFS(threading.Thread):
-    def __init__(self, dev):
-        threading.Thread.__init__(self)
-        self.dev = (Client(dev.client.host, dev.client.port)).device(dev.serial) #make a new client obj
-
-    def launch_stfs(self):
-        apk_path = self.dev.shell("pm path jp.co.cyberagent.stf | tr -d '\r' | awk -F: '{print $2}'")
-        self.dev.shell(f"export CLASSPATH={apk_path}")
-        self.dev.shell("exec app_process /system/bin jp.co.cyberagent.stf.Agent")
-
-    def run(self):
-        print("Starting STFS thread...")
-        self.launch_stfs()
-
-    def stop(self):
-        pass
-
-    #TODO: Add thread interrupt handling to kill off stfs agent
-
-class Minitouch(threading.Thread):
-    def __init__(self, dev): 
-        threading.Thread.__init__(self)
-        self.dev = (Client(dev.client.host, dev.client.port)).device(dev.serial) #make a new client obj
-
-    def launch_minitouch(self):
-        self.dev.shell("./data/local/tmp/minitouch")
-
-    def run(self):
-        print("Starting Minitouch thread...")
-        self.launch_minitouch()
-    
-    def stop(self):
-        pass
-
-    #TODO: Add thread interrupt handling to kill off minitouch
-
-
 class Setup:
 
-    def __init__(self, host="127.0.0.1", port=5037, serial=None, minitouch_port=6723):
+    def __init__(self, host="127.0.0.1", port=5037, serial=None):
 
         self.dev = (Client(host, port)).devices()[0] if serial is None else (Client(host, port)).device(serial)
         
@@ -58,9 +20,7 @@ class Setup:
         
         self.usr = 10 #Change this to 10 if using work profile or another usr id if running snapchat in another user.
         self.positions = dict()
-
-        self.minitouch_port = minitouch_port
-
+        
         if not self.dev:
             print("No device connected.")
             sys.exit(1)
@@ -82,28 +42,6 @@ class Setup:
 
     def setup_automation_env(self):
         print("Please do NOT touch your device until instructed to do so!!")
-        print("Installing STFS apk...", end="\t")
-        if not self.dev.is_installed("jp.co.cyberagent.stf"):
-            self.dev.install(os.path.join(os.path.join(self.exec_dir, "adb_agents"), "STFS.apk"))
-            print("Done.")
-        else:
-            print("Done.")
-
-        print("Installing minitouch agent...", end="\t")
-        self.dev.push(os.path.join(os.path.join(self.exec_dir, "adb_agents"), "minitouch"), "/data/local/tmp/minitouch")
-        print("Done.")
-
-        print("Launching STFS agent...")
-        stfs_thread = STFS(self.dev)
-        stfs_thread.start()
-
-        print("Launching minitouch agent...")
-        mini_thread = Minitouch(self.dev)
-        mini_thread.start()
-
-        print("Establishing connection with minitouch...")
-        self.dev.forward("localabstract:minitouch", f"tcp:{self.minitouch_port}")
-
         print("Setting up automation environment...")
         self.open_snapchat()
         time.sleep(5)
