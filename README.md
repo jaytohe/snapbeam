@@ -7,6 +7,8 @@
 - Controls your snapchat application by continiously snap-spamming the users you last sent a snap to.
 - Also, adds new friends to your account cus the more people you sent a snap to = the higher the snapscore gain.
 
+## NOTE: DO NOT ADD TOO MANY NEW FRIENDS CUS YOUR ACCOUNT WILL GET BANNED!
+
 ## But..really, how does it work?
 Ok you wanna get technical.. *\*clears throat\**
 
