@@ -3,18 +3,19 @@ import time
 import sys
 class PayloadRunner(Setup):
 
-    def __init__(self):
+    def __init__(self, skipSetup=False):
         
         super().__init__()
-
-        if(super().setup_automation_env() == -1):
-            sys.exit(1) #TODO: Better way to exit script more gracefully.
+        
+        if not skipSetup:
+            if(super().setup_automation_env() == -1):
+                sys.exit(1) #TODO: Better way to exit script more gracefully.
 
     def add_friends_routine(self):
+        
         self.open_snapchat()
         time.sleep(5)
-
-        names=("Robin", "Clark", "Chris") #User names to search and add.
+        names=("John", "Jennifer", "Mary") #User names to search and add.
         self.interactor.tap(self.positions.get("add_friend")[0])
         time.sleep(1)
         for i, name in enumerate(names):
@@ -77,9 +78,29 @@ class PayloadRunner(Setup):
         
         print(f"Finished {cycles} cycles of snapscore boost. Bye bye!")
         self.close_snapchat()
+    
+    def delete_all_friends_routine(self):
+        #Rough draft routine with hardcoded pointer location to delete all friends. Change them based on your device's screen size.
+    #You should be in the `Chat` page of snapchat and then run it.
+    #It will run indefinitely until you CTRL+C
+    
+        avatar_coords = (93, 504)
+        more_button = (114, 2476)
+        remove_friend_button = (372, 1531)
+        confirm_removal = (757, 1587)
+        while(True):
+            self.interactor.tap_and_hold(avatar_coords, 500)
+            time.sleep(2)
+            self.interactor.tap(more_button)
+            time.sleep(1.5)
+            self.interactor.tap(remove_friend_button)
+            time.sleep(2)
+            self.interactor.tap(confirm_removal)
+            time.sleep(2.5)
 
 
 if __name__ == "__main__":
-        p = PayloadRunner()
+        p = PayloadRunner(skipSetup=True)
         #p.add_friends_routine()
-        p.boost_score_routine()
+        p.delete_all_friends_routine()
+        #p.boost_score_routine()

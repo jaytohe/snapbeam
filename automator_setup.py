@@ -14,7 +14,7 @@ class Setup:
 
     def __init__(self, mode=0):
         self.dev = (Client()).devices()[0]
-        self.usr = 0
+        self.usr = 10
         self.positions = dict()
 
         if not self.dev:
