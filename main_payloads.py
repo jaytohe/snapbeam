@@ -1,20 +1,32 @@
 from automator_setup import Setup
 import time
 import sys
+import socket
 class PayloadRunner(Setup):
 
-    def __init__(self):
+    def __init__(self, host="127.0.0.1", port=5037, minitouch_port=6723, serial=None):
         
-        super().__init__()
+        super().__init__(host, port, serial)
 
         if(super().setup_automation_env() == -1):
             sys.exit(1) #TODO: Better way to exit script more gracefully.
+
+        self.minisocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.minisocket.setblocking(True)
+        try:
+            self.minisocket.connect((host, minitouch_port))
+        except OSError:
+            print("Problem connecting to minitouch socket.")
+            sys.exit(1)
+
+        #print(repr(self.minisocket.recv(1024)))
+
 
     def add_friends_routine(self):
         self.open_snapchat()
         time.sleep(5)
 
-        names=("Robin", "Clark", "Chris") #User names to search and add.
+        names=("Nigel",) #User names to search and add.
         self.interactor.tap(self.positions.get("add_friend")[0])
         time.sleep(1)
         for i, name in enumerate(names):
@@ -46,10 +58,18 @@ class PayloadRunner(Setup):
                     #print(mid)
                     add_button_positions.append(self.interactor.offset(mid, (-100, 0)))
                     #print(self.interactor.offset(mid, (-100, 0)))
-
-                for add_btn in add_button_positions[::-1]: #Backwards traversal to avoid tapping same user.
-                    self.interactor.tap(add_btn)
                 
+                for pointer_id, add_btn_coords in enumerate(add_button_positions):
+                	self.minisocket.sendall(f"d {pointer_id} {int(add_btn_coords[0])} {int(add_btn_coords[1])} 1\n".encode())
+                	print(pointer_id)
+                	
+                self.minisocket.sendall("c\n".encode())
+                for pid in range(len(add_button_positions)):
+                	self.minisocket.sendall(f"u {pid}\n".encode())
+                	self.minisocket.sendall("c\n".encode())
+                self.minisocket.sendall("c\n".encode())
+                time.sleep(2)
+                	
         print("Finished adding friends.")
         self.close_snapchat()
 
@@ -81,5 +101,5 @@ class PayloadRunner(Setup):
 
 if __name__ == "__main__":
         p = PayloadRunner()
-        #p.add_friends_routine()
-        p.boost_score_routine()
+        p.add_friends_routine()
+        #p.boost_score_routine()
