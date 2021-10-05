@@ -9,21 +9,20 @@ class Display:
         self.width, self.height = [int(dimension) for dimension in phys_size_str.split()[-1].split("x")]
         self.middle = (self.width//2, self.height//2)
 
-
 class Setup:
 
-    def __init__(self, mode=0):
-        self.dev = (Client()).devices()[0]
+    def __init__(self, host, port, serial=None):
+        client= (Client(host, port))
+        if len(client.devices()) == 0:
+            raise IOError("No device connected.")
+        
+        self.dev = client.devices()[0] if serial is None else (client).device(serial)
         self.usr = 10
         self.positions = dict()
 
-        if not self.dev:
-            print("No device connected.")
-            sys.exit(1)
-            
-        elif not self.dev.shell(f"pm list packages --user {self.usr} | grep com.snapchat.android"):
-            print("Snapchat not installed!")
-            sys.exit(1)
+        if not self.dev.shell(f"pm list packages --user {self.usr} | grep com.snapchat.android"):
+            raise IOError("Snapchat not installed!")
+            #sys.exit(1)
         
         #If checks passed, gather display info and start setup
         self.display = Display(self.dev.shell("wm size"))
@@ -35,12 +34,15 @@ class Setup:
     def close_snapchat(self):
         self.dev.shell("am force-stop com.snapchat.android")
 
-
-    def setup_automation_env(self):
-        print("Please do NOT touch your device until instructed to do so!!")
-        print("Setting up automation environment...", end="\t")
-        self.open_snapchat()
-        time.sleep(5)
+    def _check_found(self, dictionary):
+        for key, val in dictionary.items():
+            if not val:
+                print("Failed!")
+                raise RuntimeError(f"Couldn't find {key} element!")
+                return False
+        return True
+            
+    def setup_main_cam_page(self, dictionary):
         
         ''' Main camera page automation '''
         tmp = self.interactor.find_xpath_coords(
@@ -49,52 +51,78 @@ class Setup:
                 midpoint=True,
                 firstonly=True,
                 )
+        if self._check_found(tmp):
+            dictionary.update(tmp)
+    
 
-        #Check if coordinates were found successfully.
-        for key, val in tmp.items():
-            if not val:
-                print("Failed!")
-                print(f"Couldn't find {key} button!")
-                return -1
-        
-        '''After taking snap page automation '''
-        #Move to after-snap page.
-        self.interactor.tap(tmp.get('camera')[0])
-        time.sleep(1)
+    def setup_after_snap_page(self, dictionary):
+        '''After Snap page automation'''
         #Unfortunately uiautomator gives erroneous coordinates for "Send To" button.
         #Hence, we approximate its position using the device's display coordinates.
-        tmp.update({
+        tmp = { 
             'send_to' : ((self.display.width-200, self.display.height-100),),
-            })
-        tmp.update(self.interactor.find_xpath_coords(discard='.//node[@resource-id="com.snapchat.android:id/preview_back_discard_button"]')) #TODO: Unsafe check for null.
-        ''' `Send To` page automation '''
-        #Move to send-to page
-        self.interactor.tap(tmp.get('send_to')[0])        
-        time.sleep(1)
+            'discard' : self.interactor.find_xpath_coords(discard='.//node[@resource-id="com.snapchat.android:id/preview_back_discard_button"]').get('discard')
+        }
+        if self._check_found(tmp):
+            dictionary.update(tmp)
+
+    def setup_send_to_page(self, dictionary):
+
         #Last snap button pos is indirectly found from the "Recents" element
-        recents = self.interactor.find_xpath_coords(r='.//node[@text="Recents"]', firstonly=True)
-        if not recents:
-            print("Could not find recents element.")
-            return -1
-        tmp.update({
-            'last_snap': (self.interactor.offset(recents.get("r")[0][2:], (0, 100)),), #get second vector's coords and offset it.
-            'commit' : tmp.get('send_to')
-        })
-        print(tmp)
+        tmp = self.interactor.find_xpath_coords(r='.//node[@text="Recents"]', firstonly=True)
 
-        #self.interactor.tap(tmp.get('last_snap')[0])
-        #self.interactor.tap(tmp.get('commit')[0])
+        if self._check_found(tmp):
+           dictionary.update({
+                'last_snap': (self.interactor.offset(tmp.get("r")[0][2:], (0, 100)),), #get second vector's coords and offset it.
+                'commit' : dictionary.get('send_to')
+            })
 
-        #Go back to main page.
-        self.interactor.swipe(self.display.middle, self.interactor.offset(self.display.middle, (400,0)), 600)
-        self.interactor.tap(tmp.get('discard')[0])
-        time.sleep(2)
-        self.interactor.tap(self.display.middle)
+    def setup_friends_page(self, dictionary):
+        tmp = self.interactor.find_xpath_coords(friends_txt_box=".//node[@resource-id='com.snapchat.android:id/input_field_edit_text']", firstonly=True, midpoint=True)
+        
+        if self._check_found(tmp):
+            dictionary.update(tmp)
 
-        ''' Friends Page Automation'''
-        self.interactor.tap(tmp.get('add_friend')[0])
-        time.sleep(2)
-        tmp.update(self.interactor.find_xpath_coords(friends_txt_box=".//node[@resource-id='com.snapchat.android:id/input_field_edit_text']", firstonly=True, midpoint=True)) #TODO: Unsafe. Check if element null.
+
+    def setup_automation_env(self, setup_mode):
+        print("Please do NOT touch your device until instructed to do so!!")
+        print("Setting up automation environment...", end="\t")
+        self.open_snapchat()
+        time.sleep(5)
+
+        tmp = dict()
+
+        #Setup main page
+        self.setup_main_cam_page(tmp)
+
+        if (setup_mode in {0, 1}): # 0: setup all, 1: setup boost, 2: setup friends
+            #Move to after-snap page.
+            self.interactor.tap(tmp.get('camera')[0])
+            time.sleep(3)
+            
+            #Setup after-snap page
+            self.setup_after_snap_page(tmp)
+
+            ''' `Send To` page automation '''
+            #Move to send-to page
+            self.interactor.tap(tmp.get('send_to')[0])        
+            time.sleep(3)
+
+            self.setup_send_to_page(tmp)
+
+            #Go back to main page.
+            self.interactor.swipe(self.display.middle, self.interactor.offset(self.display.middle, (400,0)), 600)
+            time.sleep(2)
+            self.interactor.tap(tmp.get('discard')[0])
+            time.sleep(2)
+            self.interactor.tap(self.display.middle)
+
+
+        if (setup_mode in {0, 2}):
+            ''' Friends Page Automation'''
+            self.interactor.tap(tmp.get('add_friend')[0])
+            time.sleep(2)
+            self.setup_friends_page(tmp)
 
         self.close_snapchat()
         print("Finished Setup!")
@@ -102,10 +130,9 @@ class Setup:
         print(tmp)
 
         self.positions = tmp.copy() 
-        
+
+
 if __name__ == "__main__":
     s = Setup()
 
     s.setup_automation_env()
-
-    (Friends(s.auto_elements_xpaths, s.diplay))
