@@ -1,4 +1,5 @@
 import argparse
+from automator_setup import Setup
 '''
 -h / --help : show help message
 
@@ -34,3 +35,58 @@ parser.add_argument(
     type=int,
     help="Num of times to take a snap and send it to others."
 )
+
+
+parser.add_argument(
+    '--add',
+    dest='usernames',
+    action='store',
+    metavar='name',
+    nargs='+',
+    default=None,
+    help="Usernames to search and add as friends"
+
+)
+
+parser.add_argument(
+    '--removeall',
+    action='store_true',
+    help="Remove all friends via the Chat section."
+)
+
+args = parser.parse_args()
+
+if (args.setupfname is not None
+        and args.cycles is None
+        and args.usernames is None
+        and not args.removeall
+        ):
+    env_prepper = Setup(host="127.0.0.1", port=5037)
+    env_prepper.setup_automation_env(setup_mode=0)
+
+elif (args.setupfname is not None
+        and args.cycles is not None
+        and args.usernames is None
+        and not args.removeall
+        ):
+    if not args.setupfname: # If string is indeed empty
+        env_prepper = Setup(host="127.0.0.1", port=5037)
+        env_prepper.setup_automation_env(setup_mode=1)
+
+elif (args.setupfname is not None
+        and args.cycles is None
+        and args.usernames is not None
+        and not args.removeall
+        ):
+    if not args.setupfname: # If string is indeed empty
+        env_prepper = Setup(host="127.0.0.1", port=5037)
+        env_prepper.setup_automation_env(setup_mode=2)
+
+elif (args.removeall 
+        and args.setupfname is None
+        and args.cycles is None
+        and args.usernames is None
+        ):
+        #delete all friends here
+        pass
+
