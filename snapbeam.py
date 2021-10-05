@@ -62,7 +62,7 @@ if (args.setupfname is not None
         and not args.removeall
         ):
     env_prepper = Setup(host="127.0.0.1", port=5037)
-    env_prepper.setup_automation_env(setup_mode=0)
+    env_prepper.setup_automation_env(setup_mode=0, file_output=args.setupfname)
 
 elif (args.setupfname is not None
         and args.cycles is not None

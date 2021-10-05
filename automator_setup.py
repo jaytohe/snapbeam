@@ -2,6 +2,7 @@
 import sys
 from ppadb.client import Client
 import time
+import json
 from utilities.touch.ScreenReader import ScreenReader
 
 class Display:
@@ -84,7 +85,7 @@ class Setup:
             dictionary.update(tmp)
 
 
-    def setup_automation_env(self, setup_mode):
+    def setup_automation_env(self, setup_mode, file_output=None):
         print("Please do NOT touch your device until instructed to do so!!")
         print("Setting up automation environment...", end="\t")
         self.open_snapchat()
@@ -105,7 +106,7 @@ class Setup:
 
             ''' `Send To` page automation '''
             #Move to send-to page
-            self.interactor.tap(tmp.get('send_to')[0])        
+            self.interactor.tap(tmp.get('send_to')[0])
             time.sleep(3)
 
             self.setup_send_to_page(tmp)
@@ -114,7 +115,7 @@ class Setup:
             self.interactor.swipe(self.display.middle, self.interactor.offset(self.display.middle, (400,0)), 600)
             time.sleep(2)
             self.interactor.tap(tmp.get('discard')[0])
-            time.sleep(2)
+            time.sleep(3)
             self.interactor.tap(self.display.middle)
 
 
@@ -129,7 +130,12 @@ class Setup:
         
         print(tmp)
 
-        self.positions = tmp.copy() 
+        if file_output is None:
+            self.positions = tmp.copy()
+        else:
+            positions_json = json.dumps(tmp, allow_nan=False, indent=4)
+            with open(f'{file_output}.json', "w") as positions_file:
+                positions_file.write(positions_json)
 
 
 if __name__ == "__main__":
