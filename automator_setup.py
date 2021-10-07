@@ -3,21 +3,26 @@ import sys
 from ppadb.client import Client
 import time
 import json
-from utilities.touch.ScreenReader import ScreenReader
+#from utilities.touch.ScreenReader import ScreenReader
+from InteractorClass import Interactor
 
+'''
 class Display:
     def __init__(self, phys_size_str):
         self.width, self.height = [int(dimension) for dimension in phys_size_str.split()[-1].split("x")]
         self.middle = (self.width//2, self.height//2)
+'''
 
-class Setup:
+class Setup(Interactor):
 
     def __init__(self, host, port, serial=None):
-        client= (Client(host, port))
-        if len(client.devices()) == 0:
-            raise IOError("No device connected.")
+
+        super().__init__(host, port, serial)
+        #client= (Client(host, port))
+        #if len(client.devices()) == 0:
+        #    raise IOError("No device connected.")
         
-        self.dev = client.devices()[0] if serial is None else (client).device(serial)
+        # self.dev = client.devices()[0] if serial is None else (client).device(serial)
         self.usr = 10
         self.positions = dict()
 
@@ -26,14 +31,16 @@ class Setup:
             #sys.exit(1)
         
         #If checks passed, gather display info and start setup
-        self.display = Display(self.dev.shell("wm size"))
-        self.interactor = ScreenReader(self.dev)
+        #self.display = Display(self.dev.shell("wm size"))
+        #self.interactor = ScreenReader(self.dev)
 
     def open_snapchat(self):
-        self.dev.shell(f"am start --user {self.usr} -n com.snapchat.android/com.snap.mushroom.MainActivity")
+        #self.dev.shell(f"am start --user {self.usr} -n com.snapchat.android/com.snap.mushroom.MainActivity")
+        self.interactor.open_snapchat(usr=10)
 
     def close_snapchat(self):
-        self.dev.shell("am force-stop com.snapchat.android")
+        #self.dev.shell("am force-stop com.snapchat.android")
+        self.interactor.close_snapchat()
 
     def _check_found(self, dictionary):
         for key, val in dictionary.items():
@@ -132,6 +139,7 @@ class Setup:
 
         if file_output is None:
             self.positions = tmp.copy()
+
         else:
             positions_json = json.dumps(tmp, allow_nan=False, indent=4)
             with open(f'{file_output}.json', "w") as positions_file:
