@@ -54,12 +54,9 @@ class ScreenReader(TouchControlWrapper):
 
     def offset(self, vector, vector_offset):
         return tuple([vector[i]+vector_offset[i] for i in range(len(vector))]) if len(vector)==len(vector_offset) else None
-'''
-    def xpath_press_midpoint(self, xpath_str):
-        positions = find_xpath_coords(xpath_str)
-        if positions is not None:
-            positions = midpoint(positions)
+        
+    def open_snapchat(self, usr=0):
+        self.dev.shell(f"am start --user {usr} -n com.snapchat.android/com.snap.mushroom.MainActivity")
 
-        for pos in positions:
-            self.tap(pos)
-    '''
+    def close_snapchat(self):
+        self.dev.shell("am force-stop com.snapchat.android")
