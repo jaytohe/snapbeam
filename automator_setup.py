@@ -23,7 +23,7 @@ class Setup(Interactor):
         #    raise IOError("No device connected.")
         
         # self.dev = client.devices()[0] if serial is None else (client).device(serial)
-        self.usr = 10
+        self.usr = 0
         self.positions = dict()
 
         if not self.dev.shell(f"pm list packages --user {self.usr} | grep com.snapchat.android"):
@@ -36,7 +36,7 @@ class Setup(Interactor):
 
     def open_snapchat(self):
         #self.dev.shell(f"am start --user {self.usr} -n com.snapchat.android/com.snap.mushroom.MainActivity")
-        self.interactor.open_snapchat(usr=10)
+        self.interactor.open_snapchat(usr=0)
 
     def close_snapchat(self):
         #self.dev.shell("am force-stop com.snapchat.android")

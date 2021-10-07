@@ -21,7 +21,7 @@ class PayloadRunner(Interactor):
                 self.positions = json.loads(json_positions.read()) #read json file positions into dictionary
 
     def open_snapchat(self):
-        self.interactor.open_snapchat(usr=10)
+        self.interactor.open_snapchat(usr=0)
 
     def close_snapchat(self):
         self.interactor.close_snapchat()
