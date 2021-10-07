@@ -1,21 +1,36 @@
 from automator_setup import Setup
+from InteractorClass import Interactor
 import time
 import sys
-class PayloadRunner(Setup):
+import json
 
-    def __init__(self, skipSetup=False):
-        
-        super().__init__()
-        
-        if not skipSetup:
-            if(super().setup_automation_env() == -1):
-                sys.exit(1) #TODO: Better way to exit script more gracefully.
+class PayloadRunner(Interactor):
 
-    def add_friends_routine(self):
+    def __init__(self, host, port, positions=None):
+        
+        super().__init__(host, port)
+        
+        #if not skipSetup:
+        #    if(super().setup_automation_env() == -1):
+        #        sys.exit(1) #TODO: Better way to exit script more gracefully.
+
+        if isinstance(positions, dict):
+            self.positions = positions
+        elif isinstance(positions, str):
+            with open(positions, "r") as json_positions:
+                self.positions = json.loads(json_positions.read()) #read json file positions into dictionary
+
+    def open_snapchat(self):
+        self.interactor.open_snapchat(usr=10)
+
+    def close_snapchat(self):
+        self.interactor.close_snapchat()
+
+    def add_friends_routine(self, names):
         
         self.open_snapchat()
         time.sleep(5)
-        names=("John", "Jennifer", "Mary") #User names to search and add.
+        #names=("John", "Jennifer", "Mary") #User names to search and add.
         self.interactor.tap(self.positions.get("add_friend")[0])
         time.sleep(1)
         for i, name in enumerate(names):
@@ -60,10 +75,13 @@ class PayloadRunner(Setup):
         
         for cycle in range(cycles):
             ''' Take a snap and move to `after snap` page '''
+            print(f"[Cycle {cycle} out of {cycles}.]")
             #NOTE: You may want to increase thread sleep times if your device is underpowered
 
-            #Record 15s video
-            self.interactor.tap_and_hold(self.positions["camera"][0], 15000)
+            
+            #self.interactor.tap_and_hold(self.positions["camera"][0], 15000)
+            #Take a picture
+            self.interactor.tap(self.positions['camera'][0])
             time.sleep(1)
 
             #Send video to `last snap` users  
@@ -99,8 +117,3 @@ class PayloadRunner(Setup):
             time.sleep(2.5)
 
 
-if __name__ == "__main__":
-        p = PayloadRunner(skipSetup=True)
-        #p.add_friends_routine()
-        p.delete_all_friends_routine()
-        #p.boost_score_routine()
